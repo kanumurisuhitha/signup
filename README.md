@@ -1,6 +1,6 @@
 # 🚀 Authentication Desk — FastAPI Backend
 
-This project is a complete authentication system built using **FastAPI** for the **UX Gorilla Hiring Backend Task**. It includes user signup, login, and authenticated user retrieval with strict validations and JWT-based authentication. The project is designed to pass the official Newman Postman test collection with **0 assertion errors**.
+This project is a complete authentication system built using **FastAPI** for the. It includes user signup, login, and authenticated user retrieval with strict validations and JWT-based authentication.
 
 ---
 
@@ -29,125 +29,57 @@ This project is a complete authentication system built using **FastAPI** for the
 
 ---
 # Backend Task: Authentication Server
-This project is a basic authentication server built using Python FastAPI. It allows users to sign up, sign in, and access their own profile information while following security best practices such as password hashing and JWT-based authentication. Instead of a database, user information is stored in a JSON file named `users.json` to keep things simple and file-based.
 
-POST /signup  
-To create a new user, send a POST request with a JSON body containing the following fields: `username`, `password`, `fname` (first name), and `lname` (last name).  
+This project is a **basic authentication server** built using **Python FastAPI**. It allows users to **sign up**, **sign in**, and **access their own profile information** while following security best practices such as **password hashing** and **JWT-based authentication**. Instead of a database, user information is stored in a **JSON file** named `users.json`.
 
-Request Body (application/json):  
-{
-  "username": "exampleuser",
-  "password": "Pass123",
-  "fname": "John",
-  "lname": "Doe"
-}  
+## POST /signup
+To create a new user, send a POST request with a JSON body containing `username`, `password`, `fname` (first name), and `lname` (last name). For example:  
+{"username": "exampleuser", "password": "Pass123", "fname": "John", "lname": "Doe"}  
 
-Success Response (201):  
-If all fields are valid and the username does not already exist, the server responds with:  
-{
-  "result": true,
-  "message": "SignUp success. Please proceed to Signin"
-}  
+**Success Response (201):**  
+{"result": true, "message": "SignUp success. Please proceed to Signin"}  
 
-Failure Responses (400):  
-- If the request body is empty or any required field is missing:  
-{
-  "result": false,
-  "error": "fields can't be empty"
-}  
-- If the username is invalid (must contain only lowercase letters and be at least 4 characters):  
-{
-  "result": false,
-  "error": "username check failed"
-}  
-- If the password is invalid (must contain at least 1 uppercase letter, 1 lowercase letter, 1 number, no special characters, and be at least 5 characters long):  
-{
-  "result": false,
-  "error": "password check failed"
-}  
-- If the first or last name contains invalid characters (must be only letters):  
-{
-  "result": false,
-  "error": "fname or lname check failed"
-}  
-- If the username already exists:  
-{
-  "result": false,
-  "error": "username already exists"
-}  
+**Failure Responses (400):**  
+- Empty body or missing fields: {"result": false, "error": "fields can't be empty"}  
+- Username validation failed (only lowercase letters, at least 4 characters): {"result": false, "error": "username check failed"}  
+- Password validation failed (at least 1 uppercase, 1 lowercase, 1 number, no special characters, min 5 chars): {"result": false, "error": "password check failed"}  
+- First/last name validation failed (letters only): {"result": false, "error": "fname or lname check failed"}  
+- Username already exists: {"result": false, "error": "username already exists"}  
 
-POST /signin  
-To log in, send a POST request with your `username` and `password`.  
+## POST /signin
+To log in, send a POST request with `username` and `password`. Example:  
+{"username": "exampleuser", "password": "Pass123"}  
 
-Request Body (application/json):  
-{
-  "username": "exampleuser",
-  "password": "Pass123"
-}  
+**Success Response (200):**  
+{"result": true, "jwt": "<jwt_token>", "message": "Signin success"}  
 
-Success Response (200):  
-On successful login, the server responds with a JWT token in the response:  
-{
-  "result": true,
-  "jwt": "<jwt_token>",
-  "message": "Signin success"
-}  
+**Failure Responses (400):**  
+- Empty body or missing fields: {"result": false, "error": "Please provide username and password"}  
+- Invalid credentials: {"result": false, "error": "Invalid username/password"}  
 
-Failure Responses (400):  
-- If the request body is empty or fields are missing:  
-{
-  "result": false,
-  "error": "Please provide username and password"
-}  
-- If the username or password is invalid:  
-{
-  "result": false,
-  "error": "Invalid username/password"
-}  
+## GET /user/me
+To access your own profile, send a GET request with the Authorization header containing your JWT token: Authorization: Bearer <jwt_token>  
 
-GET /user/me  
-To access your own profile, send a GET request with the **Authorization** header containing your JWT token received from `/signin`.  
+**Success Response (200):**  
+{"result": true, "data": {"fname": "John", "lname": "Doe", "password": "<hashed_password>"}}  
 
-Headers:  
-Authorization: Bearer <jwt_token>  
+**Failure Responses (400):**  
+- Missing token: {"result": false, "error": "Please provide a JWT token"}  
+- Invalid or expired token: {"result": false, "error": "JWT Verification Failed"}  
 
-Success Response (200):  
-If the token is valid, the server returns the user’s profile information including hashed password:  
-{
-  "result": true,
-  "data": {
-    "fname": "John",
-    "lname": "Doe",
-    "password": "<hashed_password>"
-  }
-}  
+## How It Works
+**Password Hashing:** User passwords are hashed using SHA-256 before storing in `users.json`. This ensures plain-text passwords are never stored.  
 
-Failure Responses (400):  
-- If the JWT token is missing:  
-{
-  "result": false,
-  "error": "Please provide a JWT token"
-}  
-- If the JWT token is invalid or expired:  
-{
-  "result": false,
-  "error": "JWT Verification Failed"
-}  
+**JWT Authentication:** Upon successful sign-in, a JWT token is created with `username` and `fname`. Protected routes require this token to verify user identity.  
 
-How It Works  
-Password Hashing: All passwords are hashed using **SHA-256** before storing in `users.json`. This ensures that no plain-text passwords are stored, increasing security.  
+**File-based Storage:** Users are stored in a simple JSON file `users.json`. Functions `load_users()` and `save_users()` handle reading and writing safely.  
 
-JWT Authentication: When a user successfully signs in, a JWT token is created containing the `username` and `fname`. This token must be sent in the Authorization header for protected routes to verify user identity.  
+**Validation:** Input fields are validated using Python regex patterns. Invalid inputs return descriptive error messages with HTTP status 400.  
 
-File-based Storage: All user data is stored in a simple JSON file named `users.json`. The functions `load_users()` and `save_users()` safely handle reading from and writing to this file.  
+## Testing the Server
+**Using Newman:** Install Newman globally using `npm install -g newman` and run the tests with `newman run --env-var baseUrl="http://127.0.0.1:8000" --env-var username="<your_username>" https://raw.githubusercontent.com/UXGorilla/hiring-backend/main/collection.json`  
+  
 
-Validation: Input fields are validated using Python regex patterns. If a user provides invalid data, the server returns descriptive error messages with HTTP status 400.  
-
-Testing the Server  
-Using Newman (Command Line):  
-1. Install Newman globally using `npm install -g newman`.  
-2. Run the test cases with:  
-```bash
-newman run --env-var baseUrl="http://127.0.0.1:8000" --env-var username="<your_username>" https://raw.githubusercontent.com/UXGorilla/hiring-backend/main/collection.json
+This setup provides a **secure and simple authentication system** with FastAPI, JSON-based storage, password hashing, and JWT authentication, fully testable through Postman or Newman.
 
 
